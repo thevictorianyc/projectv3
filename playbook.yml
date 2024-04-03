@@ -1,0 +1,49 @@
+---
+- name: Deploy Web App
+  hosts: all
+  become: yes
+
+  vars:
+    app_name: "Web-App"
+    app_repo_url: "https://github.com/thevictorianyc/Project1.git"
+    http_server_ubuntu: "apache2"
+    http_server_centos: "httpd"
+
+  tasks:
+    - name: Install Git (Ubuntu)
+      apt:
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Install Apache HTTP server on Ubuntu
+      package:
+        name: "apache2"
+        state: present
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Install Apache HTTP server on CentOS
+      package:
+        name: "httpd"
+        state: present
+      when: ansible_distribution == 'CentOS'
+
+    - name: Clone app repository
+      git:
+        repo: "{{ app_repo_url }}"
+        dest: "/var/www/html/{{ app_name }}"
+      notify:
+        - Restart Apache for Ubuntu
+        - Restart Apache for CentOS
+
+
+  handlers:
+  - name: Restart Apache for Ubuntu
+    service:
+      name: "apache2"
+      state: restarted
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Restart Apache for CentOS
+    service:
+      name: "httpd"
+      state: restarted
+    when: ansible_distribution == 'CentOS'
